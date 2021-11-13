@@ -27,6 +27,15 @@ func CreateUser(ctx *gin.Context) {
 	return
 }
 
+func GetAllUsers(ctx *gin.Context) {
+	foundUsers, err := services.GetAllUsers()
+	if err != nil {
+		ctx.JSON(err.Code, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, foundUsers)
+}
+
 func GetUser(ctx *gin.Context) {
 	userIdParam := ctx.Param("userId")
 	userId, parseError := strconv.ParseInt(userIdParam, 10, 64)

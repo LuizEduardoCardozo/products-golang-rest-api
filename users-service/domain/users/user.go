@@ -1,7 +1,6 @@
 package users
 
 import (
-	"fmt"
 	"strings"
 
 	usersdb "github.com/LuizEduardoCardozo/catalog-api/users-service/datasources/mysql/users_db"
@@ -29,20 +28,45 @@ func (user *User) Validate() *errors.RestError {
 	return nil
 }
 
-func (user *User) Get() *errors.RestError {
-	if err := usersdb.UsersDB.Ping(); err != nil {
-		panic(err)
+func GetAllUsers() (*[]User, *errors.RestError) {
+	var foundUsers []User
+
+	stmt, err := usersdb.UsersDB.Prepare(usersdb.QGetAllUsers)
+	if err != nil {
+		return nil, errors.NewBadRequestError(err.Error())
+	}
+	defer stmt.Close()
+
+	queryResult, err := stmt.Query()
+	if err != nil {
+		return nil, errors.NewInternalServerError(err.Error())
 	}
 
-	foundUser := mockedUsersDatabase[user.Id]
-	if foundUser == nil {
-		return errors.NewNoContentError(fmt.Sprintf("user %d not found", user.Id), "user_not_found")
+	for queryResult.Next() {
+		var user User
+		if err := queryResult.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreated); err != nil {
+			return nil, errors.NewInternalServerError(err.Error())
+		}
+		foundUsers = append(foundUsers, user)
 	}
-	user.Id = foundUser.Id
-	user.Email = foundUser.Email
-	user.LastName = foundUser.LastName
-	user.FirstName = foundUser.FirstName
-	user.DateCreated = foundUser.DateCreated
+
+	return &foundUsers, nil
+}
+
+func (user *User) Get() *errors.RestError {
+	stmt, err := usersdb.UsersDB.Prepare(usersdb.QGetUserById)
+	if err != nil {
+		return errors.NewBadRequestError(err.Error())
+	}
+	defer stmt.Close()
+
+	query, err := stmt.Query(user.Id)
+	for query.Next() {
+		if err := query.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreated); err != nil {
+			return errors.NewBadRequestError(err.Error())
+		}
+	}
+
 	return nil
 }
 

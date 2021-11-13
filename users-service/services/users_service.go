@@ -15,6 +15,14 @@ func CreateUser(user users.User) (*users.User, *errors.RestError) {
 	return &user, nil
 }
 
+func GetAllUsers() (*[]users.User, *errors.RestError) {
+	users, err := users.GetAllUsers()
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
+}
+
 func GetUser(id int64) (*users.User, *errors.RestError) {
 	user := users.User{Id: id}
 	if getError := user.Get(); getError != nil {

@@ -9,7 +9,9 @@ import (
 )
 
 const (
-	QInsertUser = "INSERT INTO users(first_name, last_name, email, date_created) VALUES(?, ?, ?, ?);"
+	QInsertUser  = "INSERT INTO users(first_name, last_name, email, date_created) VALUES(?, ?, ?, ?);"
+	QGetAllUsers = "SELECT id, first_name, last_name, email, date_created FROM users;"
+	QGetUserById = "SELECT id, first_name, last_name, email, date_created FROM users WHERE id=?;"
 )
 
 var (
