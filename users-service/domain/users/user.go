@@ -60,11 +60,9 @@ func (user *User) Get() *errors.RestError {
 	}
 	defer stmt.Close()
 
-	query, err := stmt.Query(user.Id)
-	for query.Next() {
-		if err := query.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreated); err != nil {
-			return errors.NewBadRequestError(err.Error())
-		}
+	query := stmt.QueryRow(user.Id)
+	if err := query.Scan(&user.Id, &user.FirstName, &user.LastName, &user.Email, &user.DateCreated); err != nil {
+		return errors.NewBadRequestError(err.Error())
 	}
 
 	return nil
