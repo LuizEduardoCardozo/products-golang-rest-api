@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	usersdb "github.com/LuizEduardoCardozo/catalog-api/users-service/datasources/mysql/users_db"
 	"github.com/LuizEduardoCardozo/catalog-api/users-service/utils/date_utils"
 	"github.com/LuizEduardoCardozo/catalog-api/users-service/utils/errors"
 )
@@ -29,6 +30,10 @@ func (user *User) Validate() *errors.RestError {
 }
 
 func (user *User) Get() *errors.RestError {
+	if err := usersdb.UsersDB.Ping(); err != nil {
+		panic(err)
+	}
+
 	foundUser := mockedUsersDatabase[user.Id]
 	if foundUser == nil {
 		return errors.NewNoContentError(fmt.Sprintf("user %d not found", user.Id), "user_not_found")
@@ -42,10 +47,25 @@ func (user *User) Get() *errors.RestError {
 }
 
 func (user *User) Save() *errors.RestError {
-	if mockedUsersDatabase[user.Id] == nil {
-		user.DateCreated = date_utils.GetNowString()
-		mockedUsersDatabase[user.Id] = user
-		return nil
+	stmt, err := usersdb.UsersDB.Prepare(usersdb.QInsertUser)
+	if err != nil {
+		return errors.NewInternalServerError(err.Error())
 	}
-	return errors.NewConflictError("user already exists", "user_already_exists")
+	defer stmt.Close()
+
+	user.DateCreated = date_utils.GetNowString()
+
+	insertResult, err := stmt.Exec(user.FirstName, user.LastName, user.Email, user.DateCreated)
+	if err != nil {
+		return errors.NewInternalServerError(err.Error())
+	}
+
+	userId, err := insertResult.LastInsertId()
+	if err != nil {
+		return errors.NewInternalServerError(err.Error())
+	}
+
+	user.Id = userId
+
+	return nil
 }

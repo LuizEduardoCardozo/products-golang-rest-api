@@ -36,7 +36,7 @@ func NewConflictError(message string, _error string) *RestError {
 
 func NewInternalServerError(message string) *RestError {
 	return &RestError{
-		Message: "Internal server error",
+		Message: message,
 		Code:    http.StatusInternalServerError,
 		Error:   "internal_server_error",
 	}
